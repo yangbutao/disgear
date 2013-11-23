@@ -80,7 +80,7 @@ public class CollectionContainer {
 		this.zkUrl=zkUrl;
 		this.scriptPath=scriptPath;
 		AgentMain.INSTANCE.setCc(this);
-		// ´´½¨Observer
+		// create Observer
 		zkController = new ZookeeperController(zkUrl, 30000,this);
 	}
 

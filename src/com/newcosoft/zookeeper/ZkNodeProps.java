@@ -17,9 +17,6 @@ public class ZkNodeProps implements JSONWriter.Writable {
 	 */
 	public ZkNodeProps(Map<String, Object> propMap) {
 		this.propMap = propMap;
-		// TODO: store an unmodifiable map, but in a way that guarantees not to
-		// wrap more than once.
-		// Always wrapping introduces a memory leak.
 	}
 
 	/**
@@ -94,12 +91,7 @@ public class ZkNodeProps implements JSONWriter.Writable {
 	@Override
 	public String toString() {
 		return JSONUtil.toJSON(this);
-		/***
-		 * StringBuilder sb = new StringBuilder(); Set<Entry<String,Object>>
-		 * entries = propMap.entrySet(); for(Entry<String,Object> entry :
-		 * entries) { sb.append(entry.getKey() + "=" + entry.getValue() + "\n");
-		 * } return sb.toString();
-		 ***/
+
 	}
 
 	/**

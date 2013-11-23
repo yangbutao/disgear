@@ -122,11 +122,6 @@ public class ZookeeperController {
 			new ZookeeperClient(zkClient).ensureExists(
 					ZkStateReader.COLLECTIONS_ZKNODE, null,
 					CreateMode.PERSISTENT);
-			/*
-			 * ShardHandler shardHandler; String adminPath; shardHandler =
-			 * cc.getShardHandlerFactory().getShardHandler(); adminPath =
-			 * cc.getAdminPath();
-			 */
 
 			overseerElector = new LeaderElector(zkClient);
 			this.overseer = new Overseer(zkStateReader);
@@ -137,7 +132,7 @@ public class ZookeeperController {
 			overseerElectContext = context;
 
 			if (!createdWatchesAndUpdated) {
-				// 创建整个集群cloudstate.json的监听者，更新本地的cloudstate状态
+				// create the cloudstate.json watcher,update the local cloudstate
 				zkStateReader.createClusterStateWatchersAndUpdate();
 			}
 
@@ -187,7 +182,7 @@ public class ZookeeperController {
 								replica.getName());
 						updatedNodes.add(replica
 								.getStr(ZkStateReader.CORE_NAME_PROP));
-						// 放到overseer/queue中，等待Overseer处理
+						// put into overseer/queue，dealing by  Overseer
 						overseerJobQueue.offer(ZkStateReader.toJSON(m));
 					}
 				}
@@ -415,69 +410,9 @@ public class ZookeeperController {
 		try {
 			if (zkClient.exists(collectionPath, null) == null) {
 				log.info("Creating collection in ZooKeeper:" + collectionName);
-				// SolrParams params = cd.getParams();
 
 				try {
 					Map<String, Object> collectionProps = new HashMap<String, Object>();
-					/*
-					 * // TODO: if collection.configName isn't set, and there
-					 * isn't already a conf in zk, just use that? String
-					 * defaultConfigName =
-					 * System.getProperty(COLLECTION_PARAM_PREFIX
-					 * +CONFIGNAME_PROP, collection);
-					 * 
-					 * // params passed in - currently only done via core admin
-					 * (create core commmand). if (params != null) {
-					 * Iterator<String> iter =
-					 * params.getParameterNamesIterator(); while
-					 * (iter.hasNext()) { String paramName = iter.next(); if
-					 * (paramName.startsWith(COLLECTION_PARAM_PREFIX)) {
-					 * collectionProps
-					 * .put(paramName.substring(COLLECTION_PARAM_PREFIX
-					 * .length()), params.get(paramName)); } }
-					 * 
-					 * // if the config name wasn't passed in, use the default
-					 * if (!collectionProps.containsKey(CONFIGNAME_PROP)) { //
-					 * TODO: getting the configName from the collectionPath
-					 * should fail since we already know it doesn't exist?
-					 * getConfName(collection, collectionPath, collectionProps);
-					 * }
-					 * 
-					 * } else if(System.getProperty("bootstrap_confdir") !=
-					 * null) { // if we are bootstrapping a collection, default
-					 * the config for // a new collection to the collection we
-					 * are bootstrapping
-					 * log.info("Setting config for collection:" + collection +
-					 * " to " + defaultConfigName);
-					 * 
-					 * Properties sysProps = System.getProperties(); for (String
-					 * sprop : System.getProperties().stringPropertyNames()) {
-					 * if (sprop.startsWith(COLLECTION_PARAM_PREFIX)) {
-					 * collectionProps
-					 * .put(sprop.substring(COLLECTION_PARAM_PREFIX.length()),
-					 * sysProps.getProperty(sprop)); } }
-					 * 
-					 * // if the config name wasn't passed in, use the default
-					 * if (!collectionProps.containsKey(CONFIGNAME_PROP))
-					 * collectionProps.put(CONFIGNAME_PROP, defaultConfigName);
-					 * 
-					 * } else if (Boolean.getBoolean("bootstrap_conf")) { // the
-					 * conf name should should be the collection name of this
-					 * core collectionProps.put(CONFIGNAME_PROP,
-					 * cd.getCollectionName()); } else { getConfName(collection,
-					 * collectionPath, collectionProps); }
-					 * 
-					 * if (collectionProps.get(DocCollection.DOC_ROUTER) ==
-					 * null) { Object numShards =
-					 * collectionProps.get(ZkStateReader.NUM_SHARDS_PROP); if
-					 * (numShards == null) { numShards =
-					 * System.getProperty(ZkStateReader.NUM_SHARDS_PROP); } if
-					 * (numShards == null) {
-					 * collectionProps.put(DocCollection.DOC_ROUTER,
-					 * ImplicitDocRouter.NAME); } else {
-					 * collectionProps.put(CacheCollection.DOC_ROUTER,
-					 * Router.DEFAULT_NAME); } }
-					 */
 					collectionProps.remove(ZkStateReader.NUM_SHARDS_PROP); // we
 																			// don't
 																			// put
@@ -550,10 +485,7 @@ public class ZookeeperController {
 		// make sure we have an update cluster state right away
 		zkStateReader.updateClusterState(true);
 
-		// 初始化，启动本地的redis的slave模式
-		// zkClient.getData(electionContexts.get(nodeName).leaderPath, false,
-		// null);
-		//
+		// init,start the node for slave mode 
 		byte[] initData = zkClient.getData(
 				electionContexts.get(nodeName).leaderPath, new Watcher() {
 
@@ -627,7 +559,7 @@ public class ZookeeperController {
 		String leaderNodeName = (String) stateMap.get("node_name");
 		String nodeName = getNodeName();
 		if (!nodeName.equals(leaderNodeName)) {
-			// 当前为slave
+			// set current to  slave mode 
 			String base_url = (String) stateMap.get("base_url");
 			String[] args = base_url.split(":");
 			ShellExec.runExec(scriptPath + File.separator + "redis_slaves.sh "
@@ -671,7 +603,7 @@ public class ZookeeperController {
 	 * 更新zookeeper中当前节点的状态
 	 */
 	public void clearNodeStatus(String nodeName) {
-		// overseer节点的选举
+		// cancel the node for overseer leader election
 		try {
 			overseerElectContext.cancelElection();
 		} catch (KeeperException e) {
@@ -682,11 +614,8 @@ public class ZookeeperController {
 			e.printStackTrace();
 		}
 
-		// shard leader的选举
+		// shard leader vote
 		BaseElectionContext context = electionContexts.get(nodeName);
-		/*
-		 * context.cancelElection(); electionContexts.remove(nodeName);
-		 */
 		try {
 			context.cancelElection();
 		} catch (KeeperException e) {
@@ -696,10 +625,10 @@ public class ZookeeperController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// 去掉当前的leaderElectPath
+		// set null to leaderElectPath
 		setLeaderElectPath(null);
 
-		// TODO: live的节点的删除
+		// TODO: live nodes delete
 		// createEphemeralLiveNode();
 		// String nodeName = getNodeName();
 		String nodePath = ZkStateReader.LIVE_NODES_ZKNODE + "/" + nodeName;
@@ -724,25 +653,21 @@ public class ZookeeperController {
 						+ nodePath
 						+ " - removing existing node to create another.");
 			}
-			/*
-			 * new ZookeeperClient(zkClient).makePath(nodePath, null,
-			 * CreateMode.EPHEMERAL);
-			 */
 		} catch (Exception e) {
 			// its okay if the node already exists
 			e.printStackTrace();
 		}
 
-		// 线程的清除
+		// interrupt the overseer thread
 		this.overseer.interuptThread();
 
 	}
 
 	/**
-	 * 更新zookeeper中当前节点的状态
+	 * put the node to rejoin leader election
 	 */
 	public void rejoinLeaderElection(String nodeName) {
-		// overseer节点的选举
+		// overseer vote
 		try {
 			overseerElectContext.rejoinLeaderElection();
 		} catch (KeeperException e) {
@@ -756,11 +681,8 @@ public class ZookeeperController {
 			e.printStackTrace();
 		}
 
-		// shard leader的选举
+		// shard leader cote
 		BaseElectionContext context = electionContexts.get(nodeName);
-		/*
-		 * context.cancelElection(); electionContexts.remove(nodeName);
-		 */
 		try {
 			context.rejoinLeaderElection();
 		} catch (KeeperException e) {
@@ -774,10 +696,10 @@ public class ZookeeperController {
 			e.printStackTrace();
 		}
 
-		// live的节点
+		// set  null to leader elect path
 		setLeaderElectPath(context.getLeaderSeqPath());
 
-		// 在lives节点下创建节点
+		// create nodes under the lives nodes
 		try {
 			createEphemeralLiveNode();
 		} catch (KeeperException e) {
@@ -787,7 +709,7 @@ public class ZookeeperController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// leaderData的跟踪，当redis重启的时，如果不为leader，则调用slave脚本
+		// set current node to slave  mode
 		try {
 			setNode2SlaveStatus();
 		} catch (Exception e) {
@@ -828,12 +750,12 @@ public class ZookeeperController {
 								// base_url=10.1.1.26:6379]
 								System.out.print(stateMap);
 
-								// 和以前的leader进行比较,如果leader发生变化，
+								// compare with old leader
 								String leaderNodeName = (String) stateMap
 										.get("node_name");
 								String nodeName = getNodeName();
 								if (!nodeName.equals(leaderNodeName)) {
-									// 当前为slave
+									// set current mode to slave mode
 									String base_url = (String) stateMap
 											.get("base_url");
 									String[] args = base_url.split(":");
@@ -870,7 +792,7 @@ public class ZookeeperController {
 		String leaderNodeName = (String) stateMap.get("node_name");
 		String nodeName = getNodeName();
 		if (!nodeName.equals(leaderNodeName)) {
-			// 当前为slave
+			// set current  node to slave mode
 			String base_url = (String) stateMap.get("base_url");
 			String[] args = base_url.split(":");
 			ShellExec.runExec(scriptPath + File.separator + "redis_slaves.sh "

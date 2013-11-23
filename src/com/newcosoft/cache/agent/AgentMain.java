@@ -71,18 +71,13 @@ public class AgentMain {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		// TODO:最简单饿方式，在检测到redis进程宕后，直接退出系统system.exit(0);
 		while (true) {
 			result = ShellExec.runExec(monitorScriptPath);
 			// result = "PONG";
 			if (result == null || !"PONG".equals(result)) {
-				// 通知zookeeper删除相关节点
 				cc.getZkController().clearNodeStatus(nodeName);
 			} else {
-				// 判断zookeeper上是否有此election的节点，如果没有，则重建进行加入选举
 				if (cc.getZkController().getLeaderElectPath() == null) {
-					System.out.println("************************"
-							+ "+++++++++++");
 					cc.getZkController().rejoinLeaderElection(nodeName);
 				}
 			}
@@ -152,8 +147,6 @@ public class AgentMain {
 	 */
 	public void doIfRedisRolechanged(ClusterState oldClusterState,
 			ClusterState newClusterState) {
-		// 初次leaderName、replicas都为null,根据clusterState中的值，更新redis的角色
-		// 如果不过空，则判断leader是否有变化，若有，则进行变更角色
 		for (CacheCollection coll : oldClusterState.getCollectionStates()
 				.values()) {
 			String currCol = coll.getName();
@@ -169,7 +162,6 @@ public class AgentMain {
 
 					if ((leaderName == null && newLeaderName != null)
 							|| !leaderName.equals(newLeaderName)) {
-						// slave角色转换
 						leaderName = newLeaderName;
 						// ShellExec.runExec("/opt/lsmp/redis_slave.sh");
 					}

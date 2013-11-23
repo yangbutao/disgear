@@ -10,17 +10,18 @@ import com.newcosoft.zookeeper.ZkStateReader;
 public class ClusterStateCacheManager {
 	
 	public static void main(String[] args) {
+		String zkUrl=args[0];
 		ClusterStateCacheManager manager=new ClusterStateCacheManager();
-		manager.createClusterStateWatcher();
+		manager.createClusterStateWatcher(zkUrl);
 
 	}
 
 	/**
-	 * 客户端对clusterstate.json节点的监控
+	 * the monitor of client clusterstate.json to clusterstate.json
 	 */
-	public void createClusterStateWatcher(){
+	public void createClusterStateWatcher(String zkUrl){
 	  try {
-		  ZooKeeper zkClient = new ZooKeeper("10.1.1.25", 100000, null);
+		  ZooKeeper zkClient = new ZooKeeper(zkUrl, 100000, null);
 		  ZkStateReader reader=new ZkStateReader(zkClient,null);
 		  try {
 			reader.createClusterStateWatchersAndUpdate();

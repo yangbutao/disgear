@@ -56,11 +56,10 @@ public class ZkStateReader {
 	public static final String SHARD_LEADERS_ZKNODE = "leaders";
 	private ZooKeeper zkClient;
 	private volatile ClusterState clusterState;
-	private boolean clusterStateUpdateScheduled;
 
 	private boolean closeClient = false;
 
-	private volatile boolean closed = false;
+	private volatile boolean closed;
 	private ZookeeperController zkController;
 
 	public ZkStateReader(ZooKeeper zkClient, ZookeeperController zkController) {
@@ -145,14 +144,14 @@ public class ZkStateReader {
 									Map<String, Object> stateMap2 = (Map<String, Object>) ZkStateReader
 											.fromJSON(data2);
 
-									// leader处于存活状态
+									// leader is alive
 
 									if (!currNodeName.equals(leaderNodeName)
 											&& (leaderNodeName != null & !leaderNodeName
 													.equals(oldLeaderNodeName))
 											&& liveNodes
 													.contains(leaderNodeName)) {
-										// 当前为slave
+										// current node is slave
 										String base_url = (String) stateMap2
 												.get("base_url");
 										if (base_url != null) {
@@ -303,43 +302,7 @@ public class ZkStateReader {
 				this.clusterState = clusterState;
 			}
 
-		} /*
-		 * else { if (clusterStateUpdateScheduled) {
-		 * log.info("Cloud state update for ZooKeeper already scheduled");
-		 * return; }
-		 * log.info("Scheduling cloud state update from ZooKeeper...");
-		 * clusterStateUpdateScheduled = true; updateCloudExecutor.schedule(new
-		 * Runnable() {
-		 * 
-		 * @Override public void run() {
-		 * log.info("Updating cluster state from ZooKeeper..."); synchronized
-		 * (getUpdateLock()) { clusterStateUpdateScheduled = false; ClusterState
-		 * clusterState; try { List<String> liveNodes = zkClient.getChildren(
-		 * LIVE_NODES_ZKNODE, null); Set<String> liveNodesSet = new
-		 * HashSet<String>(); liveNodesSet.addAll(liveNodes);
-		 * 
-		 * if (!onlyLiveNodes) {
-		 * log.info("Updating cloud state from ZooKeeper... ");
-		 * 
-		 * clusterState = ClusterState.load(zkClient, liveNodesSet); } else {
-		 * log.info("Updating live nodes from ZooKeeper... "); clusterState =
-		 * new ClusterState( ZkStateReader.this.clusterState
-		 * .getZkClusterStateVersion(), liveNodesSet,
-		 * ZkStateReader.this.clusterState .getCollectionStates()); }
-		 * 
-		 * ZkStateReader.this.clusterState = clusterState;
-		 * 
-		 * } catch (KeeperException e) { if (e.code() ==
-		 * KeeperException.Code.SESSIONEXPIRED || e.code() ==
-		 * KeeperException.Code.CONNECTIONLOSS) {
-		 * log.warn("ZooKeeper watch triggered, but Solr cannot talk to ZK");
-		 * return; } log.error("", e); throw new RuntimeException(e); } catch
-		 * (InterruptedException e) { // Restore the interrupted status
-		 * Thread.currentThread().interrupt(); log.error("", e); throw new
-		 * RuntimeException(e); } // update volatile
-		 * ZkStateReader.this.clusterState = clusterState; } } },
-		 * SOLRCLOUD_UPDATE_DELAY, TimeUnit.MILLISECONDS); }
-		 */
+		} 
 
 	}
 

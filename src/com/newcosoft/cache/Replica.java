@@ -7,13 +7,11 @@ import org.noggit.JSONUtil;
 import com.newcosoft.zookeeper.ZkNodeProps;
 
 public class Replica extends ZkNodeProps {
-	// protected Map<String, Object> propMap;
 	private final String name;
 	private final String nodeName;
 
 	public Replica(String name, Map<String, Object> propMap) {
 		super(propMap);
-		// this.propMap=propMap;
 		this.name = name;
 		nodeName = (String) propMap.get("node_name");
 	}

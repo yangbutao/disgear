@@ -24,7 +24,6 @@ public class ZookeeperClient {
 		try {
 			makePath(path, data, CreateMode.PERSISTENT);
 		} catch (Exception e) {
-			// its okay if another beats us creating the node
 			e.printStackTrace();
 		}
 
@@ -33,9 +32,6 @@ public class ZookeeperClient {
 	public void makePath(String path, byte[] data, CreateMode createMode)
 			throws Exception {
 		boolean failOnExists = true;
-		/*if (LOG.isInfoEnabled()) {
-			LOG.info("makePath: " + path);
-		}*/
 		boolean retry = true;
 
 		if (path.startsWith("/")) {
