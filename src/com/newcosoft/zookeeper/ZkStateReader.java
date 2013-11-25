@@ -113,7 +113,7 @@ public class ZkStateReader {
 							ClusterState clusterState = ClusterState.load(
 									stat.getVersion(), data, liveNodesSet);
 
-							// 如果leader有变化，则需要变更本地slave
+							// if leader is changed，then change current node slave status to sync from new leader
 							String currNodeName = ZkStateReader.this.zkController
 									.getNodeName();
 							Replica leader = clusterState.getLeader(
