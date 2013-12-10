@@ -1,4 +1,4 @@
-package com.newcosoft.cacge.test;
+package com.newcosoft.cache.test;
 
 import java.util.HashMap;
 import java.util.List;
