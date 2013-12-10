@@ -49,9 +49,9 @@ public class CacheClient {
 			e1.printStackTrace();
 		}
 		String key = "000000000000000005";
-		queryByKey(key, 10);
+		queryByKey("col1",key, 10);
 		// CacheClient.INSTANCE.read(urls[0], new Integer(urls[1]), key);
-		queryByKey(key, 10);
+		queryByKey("col1",key, 10);
 	}
 
 	/**
@@ -62,8 +62,8 @@ public class CacheClient {
 	 * @param hash
 	 *            value of redis,type is HashMap
 	 */
-	public static void writeByKey(String key, Map<String, String> hash) {
-		writeByKey(key, hash, 10);
+	public static void writeByKey(String collection,String key, Map<String, String> hash) {
+		writeByKey(collection,key, hash, 10);
 	}
 
 	/**
@@ -76,15 +76,15 @@ public class CacheClient {
 	 * @param mapValue
 	 *            the value map value
 	 */
-	public static void writeByKey(String key, String mapKey, String mapValue) {
-		writeByKey(key, mapKey, mapValue, 10);
+	public static void writeByKey(String collection,String key, String mapKey, String mapValue) {
+		writeByKey(collection,key, mapKey, mapValue, 10);
 	}
 
-	public static void writeByKey(String key, String mapKey, String mapValue,
+	public static void writeByKey(String collection,String key, String mapKey, String mapValue,
 			int tryCnt) {
 		String writerUrl = null;
 		try {
-			writerUrl = getWriteUrl(key);
+			writerUrl = getWriteUrl(collection,key);
 			String[] urls = writerUrl.split(":");
 			CacheOperation.INSTANCE.insert(urls[0], new Integer(urls[1]), key,
 					mapKey, mapValue);
@@ -93,7 +93,7 @@ public class CacheClient {
 			e.printStackTrace();
 			tryCnt--;
 			if (tryCnt > 0) {
-				writeByKey(key, mapKey, mapValue, tryCnt);
+				writeByKey(collection,key, mapKey, mapValue, tryCnt);
 			}
 		}
 	}
@@ -103,11 +103,11 @@ public class CacheClient {
 	 * 
 	 * @param key
 	 */
-	public static void writeByKey(String key, Map<String, String> hash,
+	public static void writeByKey(String collection,String key, Map<String, String> hash,
 			int tryCnt) {
 		String writerUrl = null;
 		try {
-			writerUrl = getWriteUrl(key);
+			writerUrl = getWriteUrl(key,collection);
 			String[] urls = writerUrl.split(":");
 			/*
 			 * Map<String, String> hash = new HashMap<String, String>();
@@ -128,7 +128,7 @@ public class CacheClient {
 			e.printStackTrace();
 			tryCnt--;
 			if (tryCnt > 0) {
-				writeByKey(key, hash, tryCnt);
+				writeByKey(collection,key, hash, tryCnt);
 			}
 		}
 	}
@@ -155,8 +155,8 @@ public class CacheClient {
 	 * @param key
 	 *            redis key
 	 */
-	public static Map<String, String> queryByKey(String key) {
-		return queryByKey(key, 10);
+	public static Map<String, String> queryByKey(String collection,String key) {
+		return queryByKey(collection,key, 10);
 	}
 
 	/**
@@ -167,8 +167,8 @@ public class CacheClient {
 	 *            the value Map key
 	 * @return
 	 */
-	public static String queryByKey(String key, String mapKey) {
-		return queryByKey(key, mapKey, 10);
+	public static String queryByKey(String collection,String key, String mapKey) {
+		return queryByKey(collection,key, mapKey, 10);
 	}
 
 	/**
@@ -179,7 +179,7 @@ public class CacheClient {
 	 *            the value Map key
 	 * @return
 	 */
-	public static String queryByKey(String key, String mapKey, int tryCnt) {
+	public static String queryByKey(String collection,String key, String mapKey, int tryCnt) {
 		String readerUrl = getReaderUrl(key);
 		String[] urls = readerUrl.split(":");
 		try {
@@ -192,7 +192,7 @@ public class CacheClient {
 			e.printStackTrace();
 			tryCnt--;
 			if (tryCnt > 0) {
-				return queryByKey(key, mapKey, tryCnt);
+				return queryByKey(collection,key, mapKey, tryCnt);
 			}
 		}
 		return null;
@@ -204,7 +204,7 @@ public class CacheClient {
 	 * 
 	 * @param key
 	 */
-	public static Map<String, String> queryByKey(String key, int tryCnt) {
+	public static Map<String, String> queryByKey(String collection,String key, int tryCnt) {
 
 		String readerUrl = getReaderUrl(key);
 		String[] urls = readerUrl.split(":");
@@ -219,7 +219,7 @@ public class CacheClient {
 			e.printStackTrace();
 			tryCnt--;
 			if (tryCnt > 0) {
-				return queryByKey(key, tryCnt);
+				return queryByKey(collection,key, tryCnt);
 			}
 		}
 
@@ -291,7 +291,7 @@ public class CacheClient {
 					hash.put("area", area);
 					hash.put("lastLoginIp", lastLoginIp);
 
-					String writeUrl = getWriteUrl(key);
+					String writeUrl = getWriteUrl("col1",key);
 					String[] urls = writeUrl.split(":");
 					CacheOperation.INSTANCE.insert(urls[0],
 							new Integer(urls[1]), key, hash);
@@ -313,12 +313,12 @@ public class CacheClient {
 
 	}
 
-	public static String getWriteUrl(String key) {
+	public static String getWriteUrl(String key,String collection) {
 		ClusterState clusterState = ClusterStateCacheManager.INSTANCE
 				.getClusterState();
 		Set<String> liveNodes = clusterState.getLiveNodes();
 		Shard shard = Router.DEFAULT.getTargetShard(key,
-				clusterState.getCollection("DEFAULT_COL"));
+				clusterState.getCollection(collection));
 		Replica leader = shard.getLeader();
 		while (!liveNodes.contains(leader.getName())) {
 			try {
